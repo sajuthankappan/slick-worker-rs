@@ -1,5 +1,5 @@
 use crate::lh_models::PageScore;
-use crate::models::{KeyAudits, PageScoreReport, Categories, Performance};
+use crate::models::{Categories, KeyAudits, PageScoreReport, Performance, ConfigSettings};
 
 pub fn map_lh_data(lh_score: &PageScore) -> PageScoreReport {
 	let mut report = PageScoreReport::default();
@@ -24,11 +24,14 @@ pub fn map_lh_data(lh_score: &PageScore) -> PageScoreReport {
 	key_audits.set_interactive(lh_score.audits().interactive().clone());
 	key_audits.set_total_blocking_time(lh_score.audits().total_blocking_time().clone());
 	key_audits.set_cumulative_layout_shift(lh_score.audits().cumulative_layout_shift().clone());
-
 	key_audits.set_first_meaningful_paint(lh_score.audits().first_meaningful_paint().clone());
 	key_audits.set_first_cpu_idle(lh_score.audits().first_cpu_idle().clone());
-
 	report.set_key_audits(key_audits);
+
+	let mut config_settings = ConfigSettings::default();
+	config_settings.set_throttling_method(lh_score.config_settings().throttling_method().clone());
+	config_settings.set_throttling(lh_score.config_settings().throttling().clone());
+	config_settings.set_emulated_form_factor(lh_score.config_settings().emulated_form_factor().clone());
 
 	report
 }

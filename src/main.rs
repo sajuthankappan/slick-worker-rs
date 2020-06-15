@@ -1,11 +1,11 @@
+use env_logger;
 use lapin::{
     options::{BasicAckOptions, BasicConsumeOptions},
     types::FieldTable,
     Connection, ConnectionProperties,
 };
-use serde::{Deserialize, Serialize};
-use env_logger;
 use log::info;
+use serde::{Deserialize, Serialize};
 
 mod lh_client;
 use lh_client::LighthouseClient;

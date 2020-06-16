@@ -98,3 +98,23 @@ pub struct ConfigSettings {
     #[serde(rename = "emulatedFormFactor")]
     emulated_form_factor: String,
 }
+
+#[derive(Deserialize, Serialize, Debug, Getters, Setters, Default, Clone)]
+#[getset(get = "pub", set = "pub")]
+pub struct Site {
+    #[serde(rename = "name")]
+    name: String,
+
+    #[serde(rename = "pages")]
+    pages: Vec<Page>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Getters, Setters, Default, Clone)]
+#[getset(get = "pub", set = "pub")]
+pub struct Page {
+    #[serde(rename = "name")]
+    name: String,
+
+    #[serde(rename = "url")]
+    url: String,
+}

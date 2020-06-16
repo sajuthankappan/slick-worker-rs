@@ -33,6 +33,7 @@ pub fn map_lh_data(lh_score: &PageScore) -> PageScoreReport {
 	config_settings.set_throttling_method(lh_score.config_settings().throttling_method().clone());
 	config_settings.set_throttling(lh_score.config_settings().throttling().clone());
 	config_settings.set_emulated_form_factor(lh_score.config_settings().emulated_form_factor().clone());
+	report.set_config_settings(config_settings);
 
 	report
 }

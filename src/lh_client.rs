@@ -14,7 +14,14 @@ impl LighthouseClient {
         }
     }
     pub async fn generate_report(&self, parameters: PageScoreParameters) -> PageScoreResults {
-        println!("auditing page {}", &parameters.url);
+        println!(
+            "auditing page {} with lighthouse version {}",
+            &parameters.url,
+            &parameters
+                .lighthouse_version
+                .clone()
+                .unwrap_or(String::from("6"))
+        );
         let client = Client::new();
         let res = client
             .post(self.report_url.as_str())

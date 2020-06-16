@@ -23,7 +23,8 @@ use data::{repositories::report_repository, slick_db};
 struct WorkerConfig {
     amqp_uri: String,
     queue_name: String,
-    lighthouse_api_url: String,
+    lighthouse6_api_url: String,
+    lighthouse5_api_url: String,
     db_uri: String,
     db_name: String,
 }
@@ -43,7 +44,8 @@ async fn main() {
     info!("Connected to db");
 
     let amqp_addr = worker_config.amqp_uri;
-    let lighthouse_api_url = worker_config.lighthouse_api_url.clone();
+    let lighthouse6_api_url = worker_config.lighthouse6_api_url.clone();
+    let lighthouse5_api_url = worker_config.lighthouse5_api_url.clone();
 
     let conn = Connection::connect(
         &amqp_addr,
@@ -64,7 +66,8 @@ async fn main() {
         .await
         .unwrap();
 
-    let lighthouse_client = LighthouseClient::new(&lighthouse_api_url);
+    let lighthouse6_client = LighthouseClient::new(&lighthouse6_api_url);
+    let lighthouse5_client = LighthouseClient::new(&lighthouse5_api_url);
 
     info!("Waiting for messages");
 
@@ -73,7 +76,15 @@ async fn main() {
             info!("receiving message");
             let data = std::str::from_utf8(&delivery.data).unwrap();
             let parameters: PageScoreParameters = serde_json::from_str(&data).unwrap();
-            let lh_results = lighthouse_client.generate_report(parameters).await;
+            let lh_results = if let Some(lh_version) = &parameters.lighthouse_version {
+                if lh_version.clone() == String::from("5") {
+                    lighthouse5_client.generate_report(parameters).await
+                } else {
+                    lighthouse6_client.generate_report(parameters).await
+                }
+            } else {
+                lighthouse6_client.generate_report(parameters).await
+            };
             let lh_data = lh_results
                 .results()
                 .get(lh_results.best_score_index().to_owned())

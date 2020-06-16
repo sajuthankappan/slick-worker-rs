@@ -25,6 +25,7 @@ pub fn map_lh_data(lh_score: &PageScore) -> PageScoreReport {
 	key_audits.set_total_blocking_time(lh_score.audits().total_blocking_time().clone());
 	key_audits.set_cumulative_layout_shift(lh_score.audits().cumulative_layout_shift().clone());
 	key_audits.set_first_meaningful_paint(lh_score.audits().first_meaningful_paint().clone());
+	key_audits.set_max_potential_fid(lh_score.audits().max_potential_fid().clone());
 	key_audits.set_first_cpu_idle(lh_score.audits().first_cpu_idle().clone());
 	report.set_key_audits(key_audits);
 

@@ -13,11 +13,14 @@ use lh_client::LighthouseClient;
 mod lh_models;
 
 mod models;
-use models::PageScoreParameters;
+use models::{PageScoreParameters, ScoreParameters, SiteTread, SitePageTread, UrlAuditDetail};
 
 mod data;
 mod lh_data_mapper;
-use data::{repositories::report_repository, slick_db};
+use data::{
+    repositories::{url_audit_detail_repository, site_repository, site_tread_repository},
+    slick_db,
+};
 
 #[derive(Deserialize, Serialize, Debug)]
 struct WorkerConfig {
@@ -75,24 +78,73 @@ async fn main() {
         if let Ok((_channel, delivery)) = delivery {
             info!("receiving message");
             let data = std::str::from_utf8(&delivery.data).unwrap();
-            let parameters: PageScoreParameters = serde_json::from_str(&data).unwrap();
-            let lh_results = if let Some(lh_version) = &parameters.lighthouse_version {
-                if lh_version.clone() == String::from("5") {
-                    lighthouse5_client.generate_report(parameters).await
-                } else {
-                    lighthouse6_client.generate_report(parameters).await
+            let parameters = serde_json::from_str::<ScoreParameters>(&data).unwrap();
+
+            if let Some(site_score_parameters) = parameters.site {
+                let site_id = site_score_parameters.site_id;
+                let site = site_repository::get_by_id(&site_id, &db)
+                    .await
+                    .unwrap()
+                    .unwrap();
+                let site_id = site.id().clone();
+                let site_settings = site.lighthouse_settings();
+
+                let mut site_tread = SiteTread::new(site.id().clone(), site.name().clone());
+
+                for page in site.pages() {
+                    let mut site_page_tread = SitePageTread::new(site_id.clone(), page.name().clone(), page.url().clone());
+                    for lighthouse_version in site_settings.versions() {
+                        for device in site_settings.devices() {
+                            let page_score_parameters = PageScoreParameters {
+                                url: page.url().clone(),
+                                device: Some(device.clone()),
+                                throttling: None,
+                                attempts: None,
+                                lighthouse_version: Some(lighthouse_version.clone()),
+                            };
+                            let page_audit_detail = audit_page(
+                                page_score_parameters,
+                                &lighthouse5_client,
+                                &lighthouse6_client,
+                            )
+                            .await;
+
+                            let insert_result =
+                                url_audit_detail_repository::add(&page_audit_detail, &db)
+                                    .await
+                                    .unwrap();
+                            let report_id = insert_result.inserted_id.as_object_id().unwrap();
+                            let page_audit_summary = lh_data_mapper::map_audit(
+                                page.name().clone(),
+                                report_id.clone(),
+                                device.clone(),
+                                lighthouse_version.clone(),
+                                &page_audit_detail,
+                            );
+                            site_page_tread.add_page_audit_summary(page_audit_summary);
+                        }
+                    }
+                    site_tread.add_site_page_tread(site_page_tread);
                 }
+                let insert_result = site_tread_repository::add(&site_tread, &db).await.unwrap();
+                let site_tread_id = insert_result.inserted_id.as_object_id().unwrap();
+                println!("Inserted site audit {}", &site_tread_id);
+            } else if let Some(page_score_parameters) = parameters.page {
+                let page_audit_detail = audit_page(
+                    page_score_parameters,
+                    &lighthouse5_client,
+                    &lighthouse6_client,
+                )
+                .await;
+                let insert_result = url_audit_detail_repository::add(&page_audit_detail, &db)
+                    .await
+                    .unwrap();
+                let audit_detail_id = insert_result.inserted_id.as_object_id().unwrap();
+                println!("Inserted url audit detail {}", audit_detail_id);
             } else {
-                lighthouse6_client.generate_report(parameters).await
-            };
-            let lh_data = lh_results
-                .results()
-                .get(lh_results.best_score_index().to_owned())
-                .unwrap();
-            let results = lh_data_mapper::map_lh_data(lh_data);
-            let insert_result = report_repository::add(&results, &db).await.unwrap();
-            let report_id = insert_result.inserted_id.as_object_id().unwrap();
-            println!("Inserted report {}", report_id);
+                panic!("No score parameters")
+            }
+
             channel
                 .basic_ack(delivery.delivery_tag, BasicAckOptions::default())
                 .await
@@ -100,4 +152,33 @@ async fn main() {
             info!("acknowledged message");
         }
     }
+}
+
+async fn audit_page(
+    page_score_parameters: PageScoreParameters,
+    lighthouse5_client: &LighthouseClient,
+    lighthouse6_client: &LighthouseClient,
+) -> UrlAuditDetail {
+    let lh_all_attempt_reports = if let Some(lh_version) = &page_score_parameters.lighthouse_version
+    {
+        if lh_version.clone() == String::from("5") {
+            lighthouse5_client
+                .generate_report(page_score_parameters)
+                .await
+        } else {
+            lighthouse6_client
+                .generate_report(page_score_parameters)
+                .await
+        }
+    } else {
+        lighthouse6_client
+            .generate_report(page_score_parameters)
+            .await
+    };
+    let lh_report = lh_all_attempt_reports
+        .reports()
+        .get(lh_all_attempt_reports.best_score_index().to_owned())
+        .unwrap();
+    let detail = lh_data_mapper::map_lh_data(lh_report);
+    detail
 }

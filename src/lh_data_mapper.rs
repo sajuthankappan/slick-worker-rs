@@ -1,39 +1,67 @@
-use crate::lh_models::PageScore;
-use crate::models::{Categories, KeyAudits, PageScoreReport, Performance, ConfigSettings};
+use crate::lh_models::Report;
+use crate::models::{
+	AuditProfile, Categories, ConfigSettings, UrlAuditDetail, PageAuditSummary, Performance,
+	WebVitals,
+};
+use wread_data_mongodb::mongodb::bson::oid::ObjectId;
 
-pub fn map_lh_data(lh_score: &PageScore) -> PageScoreReport {
-	let mut report = PageScoreReport::default();
-	report.set_lighthouse_version(lh_score.lighthouse_version().clone());
-	report.set_requested_url(lh_score.requested_url().clone());
-	report.set_final_url(lh_score.final_url().clone());
-	report.set_fetch_time(lh_score.fetch_time().clone());
+pub fn map_lh_data(lh_report: &Report) -> UrlAuditDetail {
+	let mut report = UrlAuditDetail::default();
+	report.set_lighthouse_version(lh_report.lighthouse_version().clone());
+	report.set_requested_url(lh_report.requested_url().clone());
+	report.set_final_url(lh_report.final_url().clone());
+	report.set_fetch_time(lh_report.fetch_time().clone());
 
 	let mut performance = Performance::default();
-	performance.set_id(lh_score.categories().performance().id().clone());
-	performance.set_title(lh_score.categories().performance().title().clone());
-	performance.set_score(lh_score.categories().performance().score().clone());
+	performance.set_id(lh_report.categories().performance().id().clone());
+	performance.set_title(lh_report.categories().performance().title().clone());
+	performance.set_score(lh_report.categories().performance().score().clone());
 
 	let mut categories = Categories::default();
 	categories.set_performance(performance);
 	report.set_categories(categories);
 
-	let mut key_audits = KeyAudits::default();
-	key_audits.set_first_contentful_paint(lh_score.audits().first_contentful_paint().clone());
-	key_audits.set_speed_index(lh_score.audits().speed_index().clone());
-	key_audits.set_largest_contentful_paint(lh_score.audits().largest_contentful_paint().clone());
-	key_audits.set_interactive(lh_score.audits().interactive().clone());
-	key_audits.set_total_blocking_time(lh_score.audits().total_blocking_time().clone());
-	key_audits.set_cumulative_layout_shift(lh_score.audits().cumulative_layout_shift().clone());
-	key_audits.set_first_meaningful_paint(lh_score.audits().first_meaningful_paint().clone());
-	key_audits.set_max_potential_fid(lh_score.audits().max_potential_fid().clone());
-	key_audits.set_first_cpu_idle(lh_score.audits().first_cpu_idle().clone());
-	report.set_key_audits(key_audits);
+	let mut web_vitals = WebVitals::default();
+	web_vitals.set_first_contentful_paint(lh_report.audits().first_contentful_paint().clone());
+	web_vitals.set_speed_index(lh_report.audits().speed_index().clone());
+	web_vitals.set_largest_contentful_paint(lh_report.audits().largest_contentful_paint().clone());
+	web_vitals.set_interactive(lh_report.audits().interactive().clone());
+	web_vitals.set_total_blocking_time(lh_report.audits().total_blocking_time().clone());
+	web_vitals.set_cumulative_layout_shift(lh_report.audits().cumulative_layout_shift().clone());
+	web_vitals.set_first_meaningful_paint(lh_report.audits().first_meaningful_paint().clone());
+	web_vitals.set_max_potential_fid(lh_report.audits().max_potential_fid().clone());
+	web_vitals.set_first_cpu_idle(lh_report.audits().first_cpu_idle().clone());
+	report.set_web_vitals(web_vitals);
 
 	let mut config_settings = ConfigSettings::default();
-	config_settings.set_throttling_method(lh_score.config_settings().throttling_method().clone());
-	config_settings.set_throttling(lh_score.config_settings().throttling().clone());
-	config_settings.set_emulated_form_factor(lh_score.config_settings().emulated_form_factor().clone());
+	config_settings.set_throttling_method(lh_report.config_settings().throttling_method().clone());
+	config_settings.set_throttling(lh_report.config_settings().throttling().clone());
+	config_settings
+		.set_emulated_form_factor(lh_report.config_settings().emulated_form_factor().clone());
 	report.set_config_settings(config_settings);
 
 	report
+}
+
+pub fn map_audit(
+	page_name: String,
+	report_id: ObjectId,
+	device: String,
+	lighthouse_version: String,
+	url_audit_detail: &UrlAuditDetail,
+) -> PageAuditSummary {
+	let summary = PageAuditSummary::new(
+		page_name,
+		AuditProfile::new(device, lighthouse_version),
+		url_audit_detail.lighthouse_version().clone(),
+		url_audit_detail.requested_url().clone(),
+		url_audit_detail.final_url().clone(),
+		url_audit_detail.fetch_time().clone(),
+		url_audit_detail.categories().clone(),
+		url_audit_detail.config_settings().clone(),
+		url_audit_detail.web_vitals().clone(),
+		report_id.clone(),
+	);
+
+	summary
 }

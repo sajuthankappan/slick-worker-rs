@@ -1,4 +1,4 @@
-use crate::lh_models::PageScoreResults;
+use crate::lh_models::AllAttemptReports;
 use crate::models::PageScoreParameters;
 use reqwest::{Client, StatusCode, Url};
 
@@ -13,14 +13,15 @@ impl LighthouseClient {
             report_url: Url::parse(&report_url).unwrap(),
         }
     }
-    pub async fn generate_report(&self, parameters: PageScoreParameters) -> PageScoreResults {
+    pub async fn generate_report(&self, parameters: PageScoreParameters) -> AllAttemptReports {
         println!(
-            "auditing page {} with lighthouse version {}",
+            "auditing {} with lighthouse version {} on {}",
             &parameters.url,
             &parameters
                 .lighthouse_version
                 .clone()
-                .unwrap_or(String::from("6"))
+                .unwrap_or(String::from("6")),
+            &parameters.device.clone().unwrap_or(String::from("mobile"))
         );
         let client = Client::new();
         let res = client
@@ -33,7 +34,7 @@ impl LighthouseClient {
             todo!("Implement error handling")
         }
 
-        let results = res.json::<PageScoreResults>().await.unwrap();
+        let results = res.json::<AllAttemptReports>().await.unwrap();
         results
     }
 }

@@ -1,6 +1,6 @@
 use env_logger;
 use lapin::{
-    options::{BasicAckOptions, BasicConsumeOptions},
+    options::{BasicAckOptions, BasicConsumeOptions, BasicQosOptions},
     types::FieldTable,
     Connection, ConnectionProperties,
 };
@@ -13,12 +13,12 @@ use lh_client::LighthouseClient;
 mod lh_models;
 
 mod models;
-use models::{PageScoreParameters, ScoreParameters, SiteTread, SitePageTread, UrlAuditDetail};
+use models::{PageScoreParameters, ScoreParameters, SitePageTread, SiteTread, UrlAuditDetail};
 
 mod data;
 mod lh_data_mapper;
 use data::{
-    repositories::{url_audit_detail_repository, site_repository, site_tread_repository},
+    repositories::{site_repository, site_tread_repository, url_audit_detail_repository},
     slick_db,
 };
 
@@ -59,6 +59,12 @@ async fn main() {
     let channel = conn.create_channel().await.unwrap();
     info!("Connected to amqp");
 
+    let prefetch_count = 1;
+    channel
+        .basic_qos(prefetch_count, BasicQosOptions::default())
+        .await
+        .unwrap();
+
     let consumer = channel
         .basic_consume(
             "score-requests",
@@ -92,7 +98,11 @@ async fn main() {
                 let mut site_tread = SiteTread::new(site.id().clone(), site.name().clone());
 
                 for page in site.pages() {
-                    let mut site_page_tread = SitePageTread::new(site_id.clone(), page.name().clone(), page.url().clone());
+                    let mut site_page_tread = SitePageTread::new(
+                        site_id.clone(),
+                        page.name().clone(),
+                        page.url().clone(),
+                    );
                     for lighthouse_version in site_settings.versions() {
                         for device in site_settings.devices() {
                             let page_score_parameters = PageScoreParameters {

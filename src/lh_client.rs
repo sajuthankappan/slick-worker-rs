@@ -1,6 +1,7 @@
 use crate::lh_models::AllAttemptReports;
 use crate::models::PageScoreParameters;
 use reqwest::{Client, StatusCode, Url};
+use log::info;
 
 pub struct LighthouseClient {
     report_url: reqwest::Url,
@@ -14,7 +15,7 @@ impl LighthouseClient {
         }
     }
     pub async fn generate_report(&self, parameters: PageScoreParameters) -> AllAttemptReports {
-        println!(
+        info!(
             "auditing {} with lighthouse version {} on {}",
             &parameters.url,
             &parameters

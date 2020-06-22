@@ -128,7 +128,7 @@ async fn main() {
                 }
                 let insert_result = site_tread_repository::add(&site_tread, &db).await.unwrap();
                 let site_tread_id = insert_result.inserted_id.as_object_id().unwrap();
-                println!("Inserted site audit {}", &site_tread_id);
+                info!("Inserted site audit {}", &site_tread_id);
             } else if let Some(page_score_parameters) = parameters.page {
                 let page_audit_detail = audit_page(
                     page_score_parameters,
@@ -140,7 +140,7 @@ async fn main() {
                     .await
                     .unwrap();
                 let audit_detail_id = insert_result.inserted_id.as_object_id().unwrap();
-                println!("Inserted url audit detail {}", audit_detail_id);
+                info!("Inserted url audit detail {}", audit_detail_id);
             } else {
                 panic!("No score parameters")
             }

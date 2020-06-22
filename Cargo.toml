@@ -1,5 +1,5 @@
 [package]
-name = "slick-worker-rs"
+name = "slick-worker"
 version = "0.1.0"
 authors = ["Saju Thankappan <sajuthankappan@gmail.com>"]
 edition = "2018"

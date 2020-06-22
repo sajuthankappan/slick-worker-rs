@@ -2,6 +2,7 @@ use crate::lh_models::{AuditValue, Throttling};
 use getset::{Getters, Setters};
 use serde::{Deserialize, Serialize};
 use wread_data_mongodb::mongodb::bson::oid::ObjectId;
+use std::collections::HashMap;
 
 #[derive(Deserialize, Serialize, Debug, Getters, Setters, Default)]
 #[getset(get = "pub", set = "pub")]
@@ -246,7 +247,7 @@ pub struct SitePageTread {
     url: String,
 
     #[serde(rename = "pageAuditSummaries")]
-    page_audit_summaries: Vec<PageAuditSummary>,
+    page_audit_summaries: HashMap<String, PageAuditSummary>,
 }
 
 impl SitePageTread {
@@ -255,12 +256,13 @@ impl SitePageTread {
             site_id,
             page_name,
             url,
-            page_audit_summaries: Vec::new(),
+            page_audit_summaries: HashMap::new(),
         }
     }
 
     pub fn add_page_audit_summary(&mut self, page_audit_summary: PageAuditSummary) {
-        self.page_audit_summaries.push(page_audit_summary);
+        let audit_profile_name = format!("{}-{}", page_audit_summary.audit_profile.device, page_audit_summary.lighthouse_version);
+        self.page_audit_summaries.insert(audit_profile_name, page_audit_summary);
     }
 }
 

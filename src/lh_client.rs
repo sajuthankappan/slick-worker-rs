@@ -16,7 +16,7 @@ impl LighthouseClient {
     }
     pub async fn generate_report(&self, parameters: PageScoreParameters) -> AllAttemptReports {
         info!(
-            "auditing {} with lighthouse version {} on {}",
+            "auditing {} with lighthouse {} on {}",
             &parameters.url,
             &parameters
                 .lighthouse_version

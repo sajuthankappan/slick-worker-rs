@@ -18,7 +18,7 @@ use models::{AuditDetail, PageAuditSummary, PageScoreParameters, ScoreParameters
 mod data;
 mod lh_data_mapper;
 use data::{
-    repositories::{site_repository, site_tread_repository, url_audit_detail_repository},
+    repositories::{site_repository, site_tread_repository, audit_detail_repository},
     slick_db,
 };
 
@@ -120,7 +120,7 @@ async fn main() {
                             .await;
 
                             let insert_result =
-                                url_audit_detail_repository::add(&page_audit_detail, &db)
+                                audit_detail_repository::add(&page_audit_detail, &db)
                                     .await
                                     .unwrap();
                             let report_id = insert_result.inserted_id.as_object_id().unwrap();
@@ -146,7 +146,7 @@ async fn main() {
                     &lighthouse6_client,
                 )
                 .await;
-                let insert_result = url_audit_detail_repository::add(&page_audit_detail, &db)
+                let insert_result = audit_detail_repository::add(&page_audit_detail, &db)
                     .await
                     .unwrap();
                 let audit_detail_id = insert_result.inserted_id.as_object_id().unwrap();

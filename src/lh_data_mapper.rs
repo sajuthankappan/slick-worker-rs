@@ -1,12 +1,12 @@
 use crate::lh_models::Report;
 use crate::models::{
-	AuditProfile, Categories, ConfigSettings, UrlAuditDetail, PageAuditSummary, Performance,
+	AuditProfile, Categories, ConfigSettings, AuditDetail, AuditSummary, Performance,
 	WebVitals,
 };
 use wread_data_mongodb::mongodb::bson::oid::ObjectId;
 
-pub fn map_lh_data(lh_report: &Report) -> UrlAuditDetail {
-	let mut report = UrlAuditDetail::default();
+pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
+	let mut report = AuditDetail::default();
 	report.set_lighthouse_version(lh_report.lighthouse_version().clone());
 	report.set_requested_url(lh_report.requested_url().clone());
 	report.set_final_url(lh_report.final_url().clone());
@@ -48,9 +48,9 @@ pub fn map_audit(
 	report_id: ObjectId,
 	device: String,
 	lighthouse_version: String,
-	url_audit_detail: &UrlAuditDetail,
-) -> PageAuditSummary {
-	let summary = PageAuditSummary::new(
+	url_audit_detail: &AuditDetail,
+) -> AuditSummary {
+	let summary = AuditSummary::new(
 		page_name,
 		AuditProfile::new(device, lighthouse_version),
 		url_audit_detail.lighthouse_version().clone(),

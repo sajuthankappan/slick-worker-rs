@@ -182,7 +182,7 @@ pub struct NetworkRequestDetailsItem {
 	start_time: f64,
 
 	#[serde(rename = "endTime")]
-	end_time: f64,
+	end_time: Option<f64>,
 
 	#[serde(rename = "finished")]
 	finished: Option<bool>,

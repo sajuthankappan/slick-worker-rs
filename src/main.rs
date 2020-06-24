@@ -13,7 +13,7 @@ use lh_client::LighthouseClient;
 mod lh_models;
 
 mod models;
-use models::{PageScoreParameters, ScoreParameters, SitePageTread, SiteTread, UrlAuditDetail};
+use models::{AuditDetail, PageAuditSummary, PageScoreParameters, ScoreParameters, SiteTread};
 
 mod data;
 mod lh_data_mapper;
@@ -98,7 +98,7 @@ async fn main() {
                 let mut site_tread = SiteTread::new(site.id().clone(), site.name().clone());
 
                 for page in site.pages() {
-                    let mut site_page_tread = SitePageTread::new(
+                    let mut page_audit_summary = PageAuditSummary::new(
                         site_id.clone(),
                         page.name().clone(),
                         page.url().clone(),
@@ -124,17 +124,17 @@ async fn main() {
                                     .await
                                     .unwrap();
                             let report_id = insert_result.inserted_id.as_object_id().unwrap();
-                            let page_audit_summary = lh_data_mapper::map_audit(
+                            let audit_summary = lh_data_mapper::map_audit(
                                 page.name().clone(),
                                 report_id.clone(),
                                 device.clone(),
                                 lighthouse_version.clone(),
                                 &page_audit_detail,
                             );
-                            site_page_tread.add_page_audit_summary(page_audit_summary);
+                            page_audit_summary.add_audit_summary(audit_summary);
                         }
                     }
-                    site_tread.add_site_page_tread(site_page_tread);
+                    site_tread.add_page_audit_summary(page_audit_summary);
                 }
                 let insert_result = site_tread_repository::add(&site_tread, &db).await.unwrap();
                 let site_tread_id = insert_result.inserted_id.as_object_id().unwrap();
@@ -168,7 +168,7 @@ async fn audit_page(
     page_score_parameters: PageScoreParameters,
     lighthouse5_client: &LighthouseClient,
     lighthouse6_client: &LighthouseClient,
-) -> UrlAuditDetail {
+) -> AuditDetail {
     let lh_all_attempt_reports = if let Some(lh_version) = &page_score_parameters.lighthouse_version
     {
         if lh_version.clone() == String::from("5") {

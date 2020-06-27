@@ -1,6 +1,6 @@
 use crate::models::SiteTread;
 use wread_data_mongodb::crud_repository;
-use wread_data_mongodb::mongodb::{results::InsertOneResult, Database, error::Error};
+use wread_data_mongodb::mongodb::{error::Error, results::InsertOneResult, Database};
 
 const COLLECTION_NAME: &str = "siteTreads";
 

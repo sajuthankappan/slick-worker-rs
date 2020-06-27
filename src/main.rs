@@ -18,7 +18,7 @@ use models::{AuditDetail, PageAuditSummary, PageScoreParameters, ScoreParameters
 mod data;
 mod lh_data_mapper;
 use data::{
-    repositories::{site_repository, site_tread_repository, audit_detail_repository},
+    repositories::{audit_detail_repository, site_repository, site_tread_repository},
     slick_db,
 };
 

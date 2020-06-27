@@ -273,7 +273,7 @@ impl PageAuditSummary {
 #[derive(Deserialize, Serialize, Debug, Getters, Setters, Default, Clone)]
 #[getset(get = "pub", set = "pub")]
 pub struct SiteTread {
-    #[serde(skip_serializing_if = "Option::is_none")] 
+    #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(rename = "_id")]
     id: Option<ObjectId>,
 

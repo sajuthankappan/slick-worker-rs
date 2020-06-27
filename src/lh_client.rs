@@ -1,7 +1,7 @@
 use crate::lh_models::AllAttemptReports;
 use crate::models::PageScoreParameters;
-use reqwest::{Client, StatusCode, Url};
 use log::info;
+use reqwest::{Client, StatusCode, Url};
 
 pub struct LighthouseClient {
     report_url: reqwest::Url,

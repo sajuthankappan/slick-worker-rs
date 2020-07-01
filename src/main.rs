@@ -10,10 +10,7 @@ use serde::{Deserialize, Serialize};
 mod lh_client;
 use lh_client::LighthouseClient;
 
-mod lh_models;
-
-mod models;
-use models::{AuditDetail, PageAuditSummary, PageScoreParameters, ScoreParameters, SiteTread};
+use slick_models::{AuditDetail, PageAuditSummary, PageScoreParameters, ScoreParameters, SiteTread};
 
 mod data;
 mod lh_data_mapper;

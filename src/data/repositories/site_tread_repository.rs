@@ -1,4 +1,4 @@
-use crate::models::SiteTread;
+use slick_models::SiteTread;
 use wread_data_mongodb::crud_repository;
 use wread_data_mongodb::mongodb::{error::Error, results::InsertOneResult, Database};
 

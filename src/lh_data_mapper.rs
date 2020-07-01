@@ -1,5 +1,5 @@
-use crate::lh_models::Report;
-use crate::models::{
+use slick_models::lh_models::Report;
+use slick_models::{
     AuditDetail, AuditProfile, AuditSummary, Categories, ConfigSettings, Performance, WebVitals,
 };
 use wread_data_mongodb::mongodb::bson::oid::ObjectId;

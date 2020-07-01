@@ -1,5 +1,5 @@
-use crate::lh_models::AllAttemptReports;
-use crate::models::PageScoreParameters;
+use slick_models::lh_models::AllAttemptReports;
+use slick_models::PageScoreParameters;
 use log::info;
 use reqwest::{Client, StatusCode, Url};
 

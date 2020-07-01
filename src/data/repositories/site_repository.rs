@@ -1,4 +1,4 @@
-use crate::models::Site;
+use slick_models::Site;
 use wread_data_mongodb::crud_repository;
 use wread_data_mongodb::mongodb::bson::oid::ObjectId;
 use wread_data_mongodb::mongodb::{error::Error, Database};

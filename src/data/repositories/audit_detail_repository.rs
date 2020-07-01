@@ -1,4 +1,4 @@
-use crate::models::AuditDetail;
+use slick_models::AuditDetail;
 use wread_data_mongodb::crud_repository;
 use wread_data_mongodb::mongodb::{error::Error, results::InsertOneResult, Database};
 

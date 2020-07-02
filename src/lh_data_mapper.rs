@@ -32,6 +32,15 @@ pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
     web_vitals.set_first_cpu_idle(lh_report.audits().first_cpu_idle().clone());
     report.set_web_vitals(web_vitals);
 
+    report.set_largest_contentful_paint_element(
+        lh_report
+            .audits()
+            .largest_contentful_paint_element()
+            .clone(),
+    );
+
+    report.set_network_requests(Some(lh_report.audits().network_requests().clone()));
+
     let mut config_settings = ConfigSettings::default();
     config_settings.set_throttling_method(lh_report.config_settings().throttling_method().clone());
     config_settings.set_throttling(lh_report.config_settings().throttling().clone());

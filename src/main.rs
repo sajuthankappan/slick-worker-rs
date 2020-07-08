@@ -10,12 +10,12 @@ use serde::{Deserialize, Serialize};
 mod lh_client;
 use lh_client::LighthouseClient;
 
-use slick_models::{AuditDetail, PageAuditSummary, PageScoreParameters, ScoreParameters, SiteTread};
+use slick_models::{AuditDetail, PageScoreParameters, ScoreParameters};
 
 mod data;
 mod lh_data_mapper;
 use data::{
-    repositories::{audit_detail_repository, site_repository, site_tread_repository},
+    repositories::{audit_detail_repository, audit_summary_repository, site_repository},
     slick_db,
 };
 
@@ -90,52 +90,54 @@ async fn main() {
                     .unwrap()
                     .unwrap();
                 let site_id = site.id().clone();
-                let site_settings = site.lighthouse_settings();
 
-                let mut site_tread = SiteTread::new(site.id().clone(), site.name().clone());
+                let site_run_id = site_repository::increment_last_run_id(&site_id, &db)
+                    .await
+                    .unwrap()
+                    .unwrap()
+                    .last_run_id()
+                    .clone();
 
                 for page in site.pages() {
-                    let mut page_audit_summary = PageAuditSummary::new(
-                        site_id.clone(),
-                        page.name().clone(),
-                        page.url().clone(),
-                    );
-                    for lighthouse_version in site_settings.versions() {
-                        for device in site_settings.devices() {
-                            let page_score_parameters = PageScoreParameters {
-                                url: page.url().clone(),
-                                device: Some(device.clone()),
-                                throttling: None,
-                                attempts: None,
-                                lighthouse_version: Some(lighthouse_version.clone()),
-                            };
-                            let page_audit_detail = audit_page(
-                                page_score_parameters,
-                                &lighthouse5_client,
-                                &lighthouse6_client,
-                            )
-                            .await;
+                    for profile in site.audit_profiles() {
+                        let page_score_parameters = PageScoreParameters {
+                            url: page.url().clone(),
+                            device: Some(profile.device().clone()),
+                            throttling: None,
+                            attempts: None,
+                            lighthouse_version: Some(profile.lighthouse_version().clone()),
+                        };
+                        let audit_detail = audit_page(
+                            page_score_parameters,
+                            &lighthouse5_client,
+                            &lighthouse6_client,
+                        )
+                        .await;
 
-                            let insert_result =
-                                audit_detail_repository::add(&page_audit_detail, &db)
-                                    .await
-                                    .unwrap();
-                            let report_id = insert_result.inserted_id.as_object_id().unwrap();
-                            let audit_summary = lh_data_mapper::map_audit(
-                                page.name().clone(),
-                                report_id.clone(),
-                                device.clone(),
-                                lighthouse_version.clone(),
-                                &page_audit_detail,
-                            );
-                            page_audit_summary.add_audit_summary(audit_summary);
-                        }
+                        let detail_insert_result = audit_detail_repository::add(&audit_detail, &db)
+                            .await
+                            .unwrap();
+                        let audit_detail_id =
+                            detail_insert_result.inserted_id.as_object_id().unwrap();
+                        info!("Inserted audit detail {}", &audit_detail_id);
+
+                        let audit_summary = lh_data_mapper::map_audit(
+                            site_id.clone(),
+                            site_run_id.clone(),
+                            page.id().clone(),
+                            audit_detail_id.clone(),
+                            profile.clone(),
+                            &audit_detail,
+                        );
+                        let summary_insert_result =
+                            audit_summary_repository::add(&audit_summary, &db)
+                                .await
+                                .unwrap();
+                        let audit_summary_id =
+                            summary_insert_result.inserted_id.as_object_id().unwrap();
+                        info!("Inserted audit summary {}", &audit_summary_id);
                     }
-                    site_tread.add_page_audit_summary(page_audit_summary);
                 }
-                let insert_result = site_tread_repository::add(&site_tread, &db).await.unwrap();
-                let site_tread_id = insert_result.inserted_id.as_object_id().unwrap();
-                info!("Inserted site audit {}", &site_tread_id);
             } else if let Some(page_score_parameters) = parameters.page {
                 let page_audit_detail = audit_page(
                     page_score_parameters,

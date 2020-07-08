@@ -52,23 +52,24 @@ pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
 }
 
 pub fn map_audit(
-    page_name: String,
-    report_id: ObjectId,
-    device: String,
-    lighthouse_version: String,
-    url_audit_detail: &AuditDetail,
+    site_id: ObjectId,
+    site_run_id: i32,
+    page_id: String,
+    audit_detail_id: ObjectId,
+    audit_profile: AuditProfile,
+    audit_detail: &AuditDetail,
 ) -> AuditSummary {
     let summary = AuditSummary::new(
-        page_name,
-        AuditProfile::new(device, lighthouse_version),
-        url_audit_detail.lighthouse_version().clone(),
-        url_audit_detail.requested_url().clone(),
-        url_audit_detail.final_url().clone(),
-        url_audit_detail.fetch_time().clone(),
-        url_audit_detail.categories().clone(),
-        url_audit_detail.config_settings().clone(),
-        url_audit_detail.web_vitals().clone(),
-        report_id.clone(),
+        site_id,
+        site_run_id,
+        page_id,
+        audit_profile.id().clone(),
+        audit_profile.clone(),
+        audit_detail.fetch_time().clone(),
+        audit_detail.categories().clone(),
+        audit_detail.config_settings().clone(),
+        audit_detail.web_vitals().clone(),
+        audit_detail_id.clone(),
     );
 
     summary

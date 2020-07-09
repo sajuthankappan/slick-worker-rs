@@ -34,7 +34,6 @@ impl LighthouseClient {
         if res.status().clone() != StatusCode::OK {
             todo!("Implement error handling")
         }
-
         let results = res.json::<AllAttemptReports>().await.unwrap();
         results
     }

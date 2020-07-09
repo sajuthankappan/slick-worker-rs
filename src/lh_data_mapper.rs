@@ -1,6 +1,7 @@
 use slick_models::lh_models::Report;
 use slick_models::{
-    AuditDetail, AuditProfile, AuditSummary, Categories, ConfigSettings, Performance, WebVitals,
+    AuditDetail, AuditProfile, AuditSummary, Categories, ConfigSettings, Performance,
+    WebVitals,
 };
 use wread_data_mongodb::mongodb::bson::oid::ObjectId;
 
@@ -40,7 +41,9 @@ pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
     );
 
     report.set_network_requests(Some(lh_report.audits().network_requests().clone()));
-
+    report.set_resource_summary(Some(lh_report.audits().resource_summary().clone()));
+    report.set_third_party_summary(Some(lh_report.audits().third_party_summary().clone()));
+    report.set_screenshot_thumbnails(Some(lh_report.audits().screenshot_thumbnails().clone()));
     let mut config_settings = ConfigSettings::default();
     config_settings.set_throttling_method(lh_report.config_settings().throttling_method().clone());
     config_settings.set_throttling(lh_report.config_settings().throttling().clone());

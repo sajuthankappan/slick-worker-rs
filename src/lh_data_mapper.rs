@@ -48,7 +48,7 @@ pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
     report.set_uses_optimized_images(Some(lh_report.audits().uses_optimized_images().clone()));
     report.set_uses_webp_images(Some(lh_report.audits().uses_webp_images().clone()));
     report.set_offscreen_images(Some(lh_report.audits().offscreen_images().clone()));
-    report.set_uses_http2(Some(lh_report.audits().uses_http2().clone()));
+    report.set_uses_http2(lh_report.audits().uses_http2().clone());
 
     let mut config_settings = ConfigSettings::default();
     config_settings.set_throttling_method(lh_report.config_settings().throttling_method().clone());

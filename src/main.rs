@@ -100,6 +100,11 @@ async fn main() {
 
                 for page in site.pages() {
                     for profile in site.audit_profiles() {
+                        let enabled = profile.enabled().unwrap_or(true);
+                        if !enabled {
+                            continue;
+                        };
+
                         let page_score_parameters = PageScoreParameters {
                             url: page.url().clone(),
                             device: Some(profile.device().clone()),

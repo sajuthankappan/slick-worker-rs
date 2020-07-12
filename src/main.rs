@@ -106,6 +106,7 @@ async fn main() {
                             throttling: None,
                             attempts: None,
                             lighthouse_version: Some(profile.lighthouse_version().clone()),
+                            blocked_url_patterns: profile.blocked_url_patterns().clone(),
                         };
                         let audit_detail = audit_page(
                             page_score_parameters,

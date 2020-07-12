@@ -1812,8 +1812,8 @@ checksum = "c111b5bd5695e56cffe5129854aa230b39c93a305372fdbb2668ca2394eea9f8"
 
 [[package]]
 name = "slick-models"
-version = "0.6.1"
-source = "git+https://github.com/sajuthankappan/slick-models-rs.git#9bd750cc051f73e55d24dcecc51932e4b6044f67"
+version = "0.7.2"
+source = "git+https://github.com/sajuthankappan/slick-models-rs.git#a3cf27f637743f13b32548b4cd9f0f82bc026f9c"
 dependencies = [
  "bson",
  "getset",

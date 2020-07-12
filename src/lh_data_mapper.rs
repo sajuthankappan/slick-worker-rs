@@ -50,6 +50,13 @@ pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
     report.set_offscreen_images(Some(lh_report.audits().offscreen_images().clone()));
     report.set_uses_http2(lh_report.audits().uses_http2().clone());
 
+    report.set_main_thread_tasks(Some(lh_report.audits().main_thread_tasks().clone()));
+    report.set_network_rtt(Some(lh_report.audits().network_rtt().clone()));
+    report.set_bootup_time(lh_report.audits().bootup_time().clone());
+    report.set_main_thread_work_breakdown(lh_report.audits().main_thread_work_breakdown().clone());
+    report.set_uses_rel_preconnect(lh_report.audits().uses_rel_preconnect().clone());
+    report.set_network_server_latency(lh_report.audits().network_server_latency().clone());
+
     let mut config_settings = ConfigSettings::default();
     config_settings.set_throttling_method(lh_report.config_settings().throttling_method().clone());
     config_settings.set_throttling(lh_report.config_settings().throttling().clone());

@@ -1,23 +1,23 @@
+mod audit;
+mod data;
+mod lh_client;
+mod lh_data_mapper;
+
+use audit::{audit_page, audit_profile, get_next_run_id};
+use data::{
+    repositories::{audit_detail_repository, site_repository},
+    slick_db,
+};
 use env_logger;
 use lapin::{
     options::{BasicAckOptions, BasicConsumeOptions, BasicQosOptions},
     types::FieldTable,
     Connection, ConnectionProperties,
 };
+use lh_client::LighthouseClient;
 use log::info;
 use serde::{Deserialize, Serialize};
-
-mod lh_client;
-use lh_client::LighthouseClient;
-
-use slick_models::{AuditDetail, PageScoreParameters, ScoreParameters};
-
-mod data;
-mod lh_data_mapper;
-use data::{
-    repositories::{audit_detail_repository, audit_summary_repository, site_repository},
-    slick_db,
-};
+use slick_models::ScoreParameters;
 
 #[derive(Deserialize, Serialize, Debug)]
 struct WorkerConfig {
@@ -90,13 +90,7 @@ async fn main() {
                     .unwrap()
                     .unwrap();
                 let site_id = site.id().clone();
-
-                let site_run_id = site_repository::increment_last_run_id(&site_id, &db)
-                    .await
-                    .unwrap()
-                    .unwrap()
-                    .last_run_id()
-                    .clone();
+                let site_run_id = get_next_run_id(&site_id, &db).await;
 
                 for page in site.pages() {
                     for profile in site.audit_profiles() {
@@ -105,43 +99,16 @@ async fn main() {
                             continue;
                         };
 
-                        let page_score_parameters = PageScoreParameters {
-                            url: page.url().clone(),
-                            device: Some(profile.device().clone()),
-                            throttling: None,
-                            attempts: None,
-                            lighthouse_version: Some(profile.lighthouse_version().clone()),
-                            blocked_url_patterns: profile.blocked_url_patterns().clone(),
-                        };
-                        let audit_detail = audit_page(
-                            page_score_parameters,
+                        audit_profile(
+                            &site_id,
+                            &site_run_id,
+                            &page,
+                            &profile,
                             &lighthouse5_client,
                             &lighthouse6_client,
+                            &db,
                         )
                         .await;
-
-                        let detail_insert_result = audit_detail_repository::add(&audit_detail, &db)
-                            .await
-                            .unwrap();
-                        let audit_detail_id =
-                            detail_insert_result.inserted_id.as_object_id().unwrap();
-                        info!("Inserted audit detail {}", &audit_detail_id);
-
-                        let audit_summary = lh_data_mapper::map_audit(
-                            site_id.clone(),
-                            site_run_id.clone(),
-                            page.id().clone(),
-                            audit_detail_id.clone(),
-                            profile.clone(),
-                            &audit_detail,
-                        );
-                        let summary_insert_result =
-                            audit_summary_repository::add(&audit_summary, &db)
-                                .await
-                                .unwrap();
-                        let audit_summary_id =
-                            summary_insert_result.inserted_id.as_object_id().unwrap();
-                        info!("Inserted audit summary {}", &audit_summary_id);
                     }
                 }
             } else if let Some(page_score_parameters) = parameters.page {
@@ -167,33 +134,4 @@ async fn main() {
             info!("acknowledged message");
         }
     }
-}
-
-async fn audit_page(
-    page_score_parameters: PageScoreParameters,
-    lighthouse5_client: &LighthouseClient,
-    lighthouse6_client: &LighthouseClient,
-) -> AuditDetail {
-    let lh_all_attempt_reports = if let Some(lh_version) = &page_score_parameters.lighthouse_version
-    {
-        if lh_version.clone() == String::from("5") {
-            lighthouse5_client
-                .generate_report(page_score_parameters)
-                .await
-        } else {
-            lighthouse6_client
-                .generate_report(page_score_parameters)
-                .await
-        }
-    } else {
-        lighthouse6_client
-            .generate_report(page_score_parameters)
-            .await
-    };
-    let lh_report = lh_all_attempt_reports
-        .reports()
-        .get(lh_all_attempt_reports.best_score_index().to_owned())
-        .unwrap();
-    let detail = lh_data_mapper::map_lh_data(lh_report);
-    detail
 }

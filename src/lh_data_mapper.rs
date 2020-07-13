@@ -57,6 +57,11 @@ pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
     report.set_uses_rel_preconnect(lh_report.audits().uses_rel_preconnect().clone());
     report.set_network_server_latency(lh_report.audits().network_server_latency().clone());
 
+    report.set_unminified_css(lh_report.audits().unminified_css().clone());
+    report.set_unminified_javascript(lh_report.audits().unminified_javascript().clone());
+    report.set_unused_css_rules(lh_report.audits().unused_css_rules().clone());
+    report.set_unused_javascript(lh_report.audits().unused_javascript().clone());
+
     let mut config_settings = ConfigSettings::default();
     config_settings.set_throttling_method(lh_report.config_settings().throttling_method().clone());
     config_settings.set_throttling(lh_report.config_settings().throttling().clone());

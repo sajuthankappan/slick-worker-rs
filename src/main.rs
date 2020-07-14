@@ -104,6 +104,7 @@ async fn main() {
                             &site_run_id,
                             &page,
                             &profile,
+                            &site_score_parameters.cookie,
                             &lighthouse5_client,
                             &lighthouse6_client,
                             &db,

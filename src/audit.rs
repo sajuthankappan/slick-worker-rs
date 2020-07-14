@@ -4,7 +4,7 @@ use crate::data::repositories::{
 use crate::lh_client::LighthouseClient;
 use crate::lh_data_mapper;
 use log::info;
-use slick_models::{AuditDetail, AuditProfile, Page, PageScoreParameters};
+use slick_models::{AuditDetail, AuditProfile, Page, PageScoreParameters, Cookie};
 use wread_data_mongodb::mongodb::{bson::oid::ObjectId, Database};
 
 pub async fn audit_profile(
@@ -12,6 +12,7 @@ pub async fn audit_profile(
     site_run_id: &i32,
     page: &Page,
     profile: &AuditProfile,
+    cookie: &Option<Cookie>,
     lighthouse5_client: &LighthouseClient,
     lighthouse6_client: &LighthouseClient,
     db: &Database,
@@ -23,6 +24,7 @@ pub async fn audit_profile(
         attempts: None,
         lighthouse_version: Some(profile.lighthouse_version().clone()),
         blocked_url_patterns: profile.blocked_url_patterns().clone(),
+        cookie: cookie.clone(),
     };
     let audit_detail = audit_page(
         page_score_parameters,

@@ -3,7 +3,8 @@ use crate::data::repositories::{
 };
 use crate::lh_client::LighthouseClient;
 use crate::lh_data_mapper;
-use log::info;
+use crate::statistics::{calculate_mean, calculate_std_deviation};
+use log::{info, warn};
 use slick_models::{
     lh_models::Report, AuditDetail, AuditProfile, Cookie, Page, PageScoreParameters,
 };
@@ -67,23 +68,41 @@ pub async fn audit_page(
         LighthouseVersion::V6 => lighthouse6_client,
     };
     let mut lh_all_attempt_reports = Vec::<Report>::new();
-    let mut best_score = 0.0;
-    let mut best_score_attempt = 0;
-    for attempt in 0..3 {
+
+    for attempt in 0..5 {
         let report = lighthouse_client
             .generate_report(&page_score_parameters)
             .await;
         let score = report.categories().performance().score().clone();
         info!("Attempt {} score {}", &attempt, &score);
         lh_all_attempt_reports.push(report);
-        if score > best_score {
-            best_score = score;
-            best_score_attempt = attempt;
-        }
     }
-    let lh_report = &lh_all_attempt_reports[best_score_attempt];
-    let detail = lh_data_mapper::map_lh_data(&lh_report);
+
+    let best_score_report = get_best_report(&lh_all_attempt_reports);
+    let detail = lh_data_mapper::map_lh_data(&best_score_report);
     detail
+}
+
+fn get_best_report(reports: &Vec<Report>) -> Report {
+    let mut best_score = 0.0;
+    let mut best_score_report = reports[0].clone();
+    let mean = calculate_mean(&reports).unwrap();
+    let std_deviation = calculate_std_deviation(&reports).unwrap();
+
+    for report in reports {
+        let score = report.categories().performance().score().clone();
+        let diff = (score - mean).abs();
+        if diff <= std_deviation {
+            if score > best_score {
+                best_score = score;
+                best_score_report = report.clone();
+            }
+        } else {
+            warn!("score {} is beyond std_deviation {} from the mean {}", &score, &std_deviation, &mean)
+        }
+    
+    }
+    best_score_report
 }
 
 fn get_lighthouse_version(page_score_parameters: &PageScoreParameters) -> LighthouseVersion {

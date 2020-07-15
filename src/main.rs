@@ -2,6 +2,7 @@ mod audit;
 mod data;
 mod lh_client;
 mod lh_data_mapper;
+mod statistics;
 
 use audit::{audit_page, audit_profile, get_next_run_id};
 use data::{

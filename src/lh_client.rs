@@ -1,4 +1,4 @@
-use slick_models::lh_models::AllAttemptReports;
+use slick_models::lh_models::Report;
 use slick_models::PageScoreParameters;
 use log::info;
 use reqwest::{Client, StatusCode, Url};
@@ -14,7 +14,7 @@ impl LighthouseClient {
             report_url: Url::parse(&report_url).unwrap(),
         }
     }
-    pub async fn generate_report(&self, parameters: PageScoreParameters) -> AllAttemptReports {
+    pub async fn generate_report(&self, parameters: &PageScoreParameters) -> Report {
         info!(
             "auditing {} with lighthouse {} on {}",
             &parameters.url,
@@ -34,7 +34,7 @@ impl LighthouseClient {
         if res.status().clone() != StatusCode::OK {
             todo!("Implement error handling")
         }
-        let results = res.json::<AllAttemptReports>().await.unwrap();
+        let results = res.json::<Report>().await.unwrap();
         results
     }
 }

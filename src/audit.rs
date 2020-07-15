@@ -4,7 +4,9 @@ use crate::data::repositories::{
 use crate::lh_client::LighthouseClient;
 use crate::lh_data_mapper;
 use log::info;
-use slick_models::{AuditDetail, AuditProfile, Page, PageScoreParameters, Cookie};
+use slick_models::{
+    lh_models::Report, AuditDetail, AuditProfile, Cookie, Page, PageScoreParameters,
+};
 use wread_data_mongodb::mongodb::{bson::oid::ObjectId, Database};
 
 pub async fn audit_profile(
@@ -59,28 +61,41 @@ pub async fn audit_page(
     lighthouse5_client: &LighthouseClient,
     lighthouse6_client: &LighthouseClient,
 ) -> AuditDetail {
-    let lh_all_attempt_reports = if let Some(lh_version) = &page_score_parameters.lighthouse_version
-    {
-        if lh_version.clone() == String::from("5") {
-            lighthouse5_client
-                .generate_report(page_score_parameters)
-                .await
-        } else {
-            lighthouse6_client
-                .generate_report(page_score_parameters)
-                .await
-        }
-    } else {
-        lighthouse6_client
-            .generate_report(page_score_parameters)
-            .await
+    let lighthouse_version = get_lighthouse_version(&page_score_parameters);
+    let lighthouse_client = match lighthouse_version {
+        LighthouseVersion::V5 => lighthouse5_client,
+        LighthouseVersion::V6 => lighthouse6_client,
     };
-    let lh_report = lh_all_attempt_reports
-        .reports()
-        .get(lh_all_attempt_reports.best_score_index().to_owned())
-        .unwrap();
-    let detail = lh_data_mapper::map_lh_data(lh_report);
+    let mut lh_all_attempt_reports = Vec::<Report>::new();
+    let mut best_score = 0.0;
+    let mut best_score_attempt = 0;
+    for attempt in 0..3 {
+        let report = lighthouse_client
+            .generate_report(&page_score_parameters)
+            .await;
+        let score = report.categories().performance().score().clone();
+        info!("Attempt {} score {}", &attempt, &score);
+        lh_all_attempt_reports.push(report);
+        if score > best_score {
+            best_score = score;
+            best_score_attempt = attempt;
+        }
+    }
+    let lh_report = &lh_all_attempt_reports[best_score_attempt];
+    let detail = lh_data_mapper::map_lh_data(&lh_report);
     detail
+}
+
+fn get_lighthouse_version(page_score_parameters: &PageScoreParameters) -> LighthouseVersion {
+    if let Some(lh_version) = &page_score_parameters.lighthouse_version {
+        if lh_version.clone() == String::from("5") {
+            return LighthouseVersion::V5;
+        } else {
+            return LighthouseVersion::V6;
+        }
+    }
+
+    LighthouseVersion::V6
 }
 
 pub async fn get_next_run_id(site_id: &ObjectId, db: &Database) -> i32 {
@@ -91,4 +106,9 @@ pub async fn get_next_run_id(site_id: &ObjectId, db: &Database) -> i32 {
         .last_run_id()
         .clone();
     site_run_id
+}
+
+enum LighthouseVersion {
+    V5,
+    V6,
 }

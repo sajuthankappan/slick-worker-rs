@@ -79,12 +79,13 @@ async fn main() {
 
     for delivery in consumer {
         if let Ok((_channel, delivery)) = delivery {
-            info!("receiving message");
+            info!("Receiving message");
             let data = std::str::from_utf8(&delivery.data).unwrap();
             let parameters = serde_json::from_str::<ScoreParameters>(&data).unwrap();
 
             if let Some(site_score_parameters) = parameters.site {
                 let site_id = site_score_parameters.site_id;
+                info!("Auditing site  {}..", &site_id);
                 let site = site_repository::get_by_id(&site_id, &db)
                     .await
                     .unwrap()

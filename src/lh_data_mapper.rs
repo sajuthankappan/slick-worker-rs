@@ -61,6 +61,8 @@ pub fn map_lh_data(lh_report: &Report) -> AuditDetail {
     report.set_unminified_javascript(lh_report.audits().unminified_javascript().clone());
     report.set_unused_css_rules(lh_report.audits().unused_css_rules().clone());
     report.set_unused_javascript(lh_report.audits().unused_javascript().clone());
+    report.set_render_blocking_resources(lh_report.audits().render_blocking_resources().clone());
+    report.set_uses_long_cache_ttl(lh_report.audits().uses_long_cache_ttl().clone());
 
     let mut config_settings = ConfigSettings::default();
     config_settings.set_throttling_method(lh_report.config_settings().throttling_method().clone());

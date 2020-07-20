@@ -8,6 +8,8 @@ use log::{info, warn};
 use slick_models::{
     lh_models::Report, AuditDetail, AuditProfile, Cookie, Page, PageScoreParameters,
 };
+use std::time::Duration;
+use tokio::time::delay_for;
 use wread_data_mongodb::mongodb::{bson::oid::ObjectId, Database};
 
 pub async fn audit_profile(
@@ -69,13 +71,15 @@ pub async fn audit_page(
     };
     let mut lh_all_attempt_reports = Vec::<Report>::new();
 
-    for attempt in 0..5 {
+    for attempt in 0..6 {
         let report = lighthouse_client
             .generate_report(&page_score_parameters)
             .await;
         let score = report.categories().performance().score().clone();
         info!("Attempt {} score {}", &attempt, &score);
         lh_all_attempt_reports.push(report);
+        let delay_seconds = Duration::new(5, 0);
+        delay_for(delay_seconds).await;
     }
 
     let best_score_report = get_best_report(&lh_all_attempt_reports);
@@ -98,10 +102,13 @@ fn get_best_report(reports: &Vec<Report>) -> Report {
                 best_score_report = report.clone();
             }
         } else {
-            warn!("score {} is beyond std_deviation {} from the mean {}", &score, &std_deviation, &mean)
+            warn!(
+                "Score {} is beyond std_deviation {} from the mean {}",
+                &score, &std_deviation, &mean
+            )
         }
-    
     }
+    info!("Best score is {}", &best_score);
     best_score_report
 }
 

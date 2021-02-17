@@ -24,6 +24,7 @@ use slick_models::ScoreParameters;
 struct WorkerConfig {
     amqp_uri: String,
     queue_name: String,
+    lighthouse7_api_url: String,
     lighthouse6_api_url: String,
     lighthouse5_api_url: String,
     db_uri: String,
@@ -45,6 +46,7 @@ async fn main() {
     info!("Connected to db");
 
     let amqp_addr = worker_config.amqp_uri;
+    let lighthouse7_api_url = worker_config.lighthouse7_api_url.clone();
     let lighthouse6_api_url = worker_config.lighthouse6_api_url.clone();
     let lighthouse5_api_url = worker_config.lighthouse5_api_url.clone();
 
@@ -73,6 +75,7 @@ async fn main() {
         .await
         .unwrap();
 
+    let lighthouse7_client = LighthouseClient::new(&lighthouse7_api_url);
     let lighthouse6_client = LighthouseClient::new(&lighthouse6_api_url);
     let lighthouse5_client = LighthouseClient::new(&lighthouse5_api_url);
 
@@ -109,6 +112,7 @@ async fn main() {
                             &site_score_parameters.cookie,
                             &lighthouse5_client,
                             &lighthouse6_client,
+                            &lighthouse7_client,
                             &db,
                         )
                         .await;
@@ -119,6 +123,7 @@ async fn main() {
                     page_score_parameters,
                     &lighthouse5_client,
                     &lighthouse6_client,
+                    &lighthouse7_client,
                 )
                 .await;
                 let insert_result = audit_detail_repository::add(&page_audit_detail, &db)

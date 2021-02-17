@@ -20,6 +20,7 @@ pub async fn audit_profile(
     cookie: &Option<Cookie>,
     lighthouse5_client: &LighthouseClient,
     lighthouse6_client: &LighthouseClient,
+    lighthouse7_client: &LighthouseClient,
     db: &Database,
 ) {
     let page_score_parameters = PageScoreParameters {
@@ -35,6 +36,7 @@ pub async fn audit_profile(
         page_score_parameters,
         &lighthouse5_client,
         &lighthouse6_client,
+        &lighthouse7_client,
     )
     .await;
 
@@ -63,11 +65,13 @@ pub async fn audit_page(
     page_score_parameters: PageScoreParameters,
     lighthouse5_client: &LighthouseClient,
     lighthouse6_client: &LighthouseClient,
+    lighthouse7_client: &LighthouseClient,
 ) -> AuditDetail {
     let lighthouse_version = get_lighthouse_version(&page_score_parameters);
     let lighthouse_client = match lighthouse_version {
         LighthouseVersion::V5 => lighthouse5_client,
         LighthouseVersion::V6 => lighthouse6_client,
+        LighthouseVersion::V7 => lighthouse7_client,
     };
     let mut lh_all_attempt_reports = Vec::<Report>::new();
 
@@ -116,8 +120,10 @@ fn get_lighthouse_version(page_score_parameters: &PageScoreParameters) -> Lighth
     if let Some(lh_version) = &page_score_parameters.lighthouse_version {
         if lh_version.clone() == String::from("5") {
             return LighthouseVersion::V5;
-        } else {
+        } else if lh_version.clone() == String::from("6") {
             return LighthouseVersion::V6;
+        } else {
+            return LighthouseVersion::V7;
         }
     }
 
@@ -137,4 +143,5 @@ pub async fn get_next_run_id(site_id: &ObjectId, db: &Database) -> i32 {
 enum LighthouseVersion {
     V5,
     V6,
+    V7,
 }
